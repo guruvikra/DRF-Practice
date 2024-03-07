@@ -11,7 +11,6 @@ from datetime import datetime
 from rest_framework.authentication import BasicAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.viewsets import ModelViewSet
-from django.db.models import Avg
 # Create your views here.
 
 
