@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import *
+from Restaurent.models import *
 
 # class AdminSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -33,7 +33,7 @@ class PersonsSerializer(serializers.ModelSerializer):
 class RestaurantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Restaurent
-        fields = ["restname"]
+        fields =["Restname"]
         
         
 class UserSerializer(serializers.ModelSerializer):
@@ -47,7 +47,7 @@ class RestaurentSerializer(serializers.ModelSerializer):
     # Admin=UserSerializer(read_only=True)
     class Meta:
         model=Restaurent
-        fields="__all__"
+        fields=["Restname"]
 
 class BookingsSerializer(serializers.ModelSerializer):
     
@@ -87,16 +87,37 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-
-    # user = serializers.StringRelatedField(read_only=True)
-    # restname = RestaurentSerializer(read_only=True)
+    restname = RestaurantSerializer(read_only=True)  # Nested serializer for Restaurant
 
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = ['id', 'user', 'restname', 'review', 'rating']
+
+    def create(self, validated_data):
+        # Create Review instance with validated data
+        restname_data = validated_data.pop('restname')
+        restaurant_instance = Restaurent.objects.create(**restname_data)
+        review_instance = Review.objects.create(restname=restaurant_instance, **validated_data)
+        return review_instance
         # depth=1
         
+class ReviewNestedSerializer(serializers.ModelSerializer):
+    restname = RestaurantSerializer()
 
+    class Meta:
+        model = Review
+        fields = [ 'user', 'restname', 'review', 'rating']
+
+    def create(self, validated_data):
+        restname_data = validated_data.pop('restname')
+        restname = Restaurent.objects.get_or_create(**restname_data)[0]
+        review = Review.objects.create(restname=restname, **validated_data)
+        return review
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['restname'] = RestaurentSerializer(instance.restname).data
+        return representation
         
 class WalletSerializer(serializers.ModelSerializer):
     # user=UserSerializer(read_only=True)
@@ -112,7 +133,6 @@ class BookingTableSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingTable
         fields = "__all__"
-        
 # class PersonsSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Persons
@@ -138,3 +158,15 @@ class CreateAdminSerializer(serializers.Serializer):
         user.is_superuser=True
         user.save()
         return validated_data
+    
+class StudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Student
+        fields="__all__"
+        
+        
+class marksSerializer(serializers.ModelSerializer):
+    # student=StudentSerializer(read_only=True)
+    class Meta:
+        model=marks
+        fields="__all__"

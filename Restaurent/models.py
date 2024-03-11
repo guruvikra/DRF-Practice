@@ -163,3 +163,55 @@ class Food(models.Model):
 #     address=models.TextField()
 #     phone_number=models.CharField(max_length=10)
 #     created_at=models.DateField(auto_now=True)
+
+# class BaseModel(models.Model):
+#     uuid=models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
+#     created_at=models.DateTimeField(auto_now=True)
+#     class Meta:
+#         abstract=True
+# class Practice(BaseModel):
+#     user=models.CharField(max_length=100)
+    
+    
+class BaseModel(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+class Student(BaseModel):
+    student=models.CharField(max_length=100)
+    
+    
+    def __str__(self):
+        return self.student
+    
+    
+class marks(BaseModel):
+    student=models.ForeignKey(Student,on_delete=models.CASCADE)
+    marks=models.DecimalField(max_digits=5,decimal_places=2)
+    grade=models.CharField(max_length=1,blank=True)
+    
+    def save(self,*args,**kwargs):
+        super().save(*args,**kwargs)
+        self.grade=self.calculate_grade()
+    
+    def calculate_grade(self):
+        if self.marks>=90:
+            return 'O'
+        elif self.marks>=80:
+            return 'A+'
+        elif self.marks>=70:
+            return 'A'
+        elif self.marks>=60:
+            return 'B'
+        elif self.marks>=50:
+            return 'C'
+        else:
+            return 'F'
+    def __str__(self):
+        return f"{self.student.student} marks are {self.marks} and grade is {self.grade}"  
+    class Meta:
+        # verbose_name = 'Marks'
+        verbose_name_plural = 'Marks'

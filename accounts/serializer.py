@@ -47,5 +47,3 @@ class LoginSerializer(serializers.Serializer):
         }
 
     
-        
-        
