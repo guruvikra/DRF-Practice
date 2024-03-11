@@ -2,8 +2,8 @@ from rest_framework.decorators import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated,IsAdminUser
 from rest_framework.authentication import BasicAuthentication
-from .models import *
-from .serializer import *
+from Restaurent.models import *
+from Restaurent.serializer import *
 from django.contrib.auth import authenticate
 from rest_framework import status
 from django.db.models import Q
@@ -500,7 +500,7 @@ class RestReview(APIView):
     authentication_classes=[JWTAuthentication]
     def get(self,request):
         data=Review.objects.filter(user=request.user.id)
-        ser=ReviewSerializer(data,many=True)
+        ser=ReviewNestedSerializer(data,many=True)
         return Response({
             "data":ser.data,
             "msg":"all review by you"
@@ -517,7 +517,7 @@ class RestReview(APIView):
         # print(rating.select_related(rating))
         
             
-        ser=ReviewSerializer(data=data)
+        ser=ReviewNestedSerializer(data=data)
         if not ser.is_valid():
             return Response({
                 'data':ser.errors,
@@ -748,3 +748,116 @@ class orderfood(APIView):
 
 class AddFoodAdmin(APIView):
     pass
+
+
+class Students(APIView):
+    def get(self,request):
+        try:
+            queryset=Student.objects.all()
+            ser=StudentSerializer(queryset,many=True)
+            return Response({
+                "data":ser.data,
+                "msg":"student list"
+            })
+            
+        except Exception as e:
+            return Response({
+                "msg":"something went wrong",
+                "data":str(e)
+            })
+    def post(self,request):
+        try:
+            data=request.data
+            ser=StudentSerializer(data=data)
+            if not ser.is_valid():
+                return Response({
+                    "data":ser.errors,
+                    "msg":"something went wrong"
+                })
+            ser.save()
+            return Response({
+                "data":ser.data,
+                "msg":"student created"
+            })
+        except Exception as e:
+            return Response({
+                "data":str(e),
+                "msg":"something went error"
+            })
+            
+            
+class Marks(APIView):
+    def get(self,request):
+        stu=request.data['student']
+        queryset=marks.objects.filter(student__student=stu)
+        ser=marksSerializer(queryset,many=True)
+        return Response({
+            "data":ser.data,
+            "msg":"this are the marks and grade"
+        })
+        
+    def post(self,request):
+        try:
+            data=request.data
+            ser=marksSerializer(data=data)
+            
+            if not ser.is_valid():
+                return Response({
+                    "data":ser.errors,
+                    "msg":"data not valid"
+                })
+            ser.save()
+            
+            return Response({
+                "data":ser.data,
+                "msg":"added"
+            })
+        except Exception as e:
+            return Response({
+                "data":str(e),
+                "msg":"Exception"
+            })
+            
+            
+class AddMarksByNameAPIView(APIView):
+    def post(self, request):
+        try:
+            # Get student name and marks data from the request
+            student = request.data.get('student')
+            marks_data = request.data.get('marks')
+
+            # Find the student by name
+            student = Student.objects.get(student=student)
+            e=marks.objects.filter(student__student=student)
+            if e.exists():
+                return Response({
+                    "data":"marks already exists",
+                    "msg":"add another student mark "
+                })
+            # Add the student ID to marks data
+            marks_data['student'] = student.uuid
+
+            # Serialize marks data
+            marks_serializer = marksSerializer(data=marks_data)
+            if not marks_serializer.is_valid():
+                return Response(marks_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            # Save the marks instance
+            marks_serializer.save()
+
+            return Response({
+                "data": marks_serializer.data,
+                "msg": "Marks added for student"
+            }, status=status.HTTP_201_CREATED)
+
+        except Student.DoesNotExist:
+            return Response({
+                "msg": "Student does not exist",
+                "data": None
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({
+                "msg": "error",
+                "data": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

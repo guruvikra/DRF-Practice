@@ -1,6 +1,6 @@
 from django.urls import path,include
 # from rest_framework.routers import DefaultRouter
-from .views import *
+from Restaurent.views import *
 
 # router=DefaultRouter()
 # router.register(r'bookview',Bookingview)
@@ -26,6 +26,9 @@ urlpatterns = [
     path('adminview',AdminRestaurant.as_view()),
     path('view/<int:id>',Viewww.as_view()),
     path('createadmin',CreatAdmin.as_view()),
+    path('student',Students.as_view()),
+    path('student/marks',Marks.as_view()),
+    path('student/mark',AddMarksByNameAPIView.as_view())
     # path('pay',process_payment.as_view()),
 ]
 
